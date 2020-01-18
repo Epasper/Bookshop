@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.List;
 
 public class Book {
 
@@ -9,7 +10,7 @@ public class Book {
     private int year;
     private String publisher;
     private int cost;
-    private ArrayList listOfRecommendations = new ArrayList();
+    private List<Recommendation> listOfRecommendations = new ArrayList<>();
 
 
     public Book(String isbn, String title, String author, String genre, int year, String publisher, int cost) {
@@ -93,11 +94,11 @@ public class Book {
         this.cost = cost;
     }
 
-    public ArrayList getListOfRecommendations() {
+    public List<Recommendation> getListOfRecommendations() {
         return listOfRecommendations;
     }
 
-    public void setListOfRecommendations(ArrayList listOfRecommendations) {
+    public void setListOfRecommendations(List<Recommendation> listOfRecommendations) {
         this.listOfRecommendations = listOfRecommendations;
     }
 }
