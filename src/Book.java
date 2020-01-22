@@ -9,11 +9,11 @@ public class Book {
     private String genre;
     private int year;
     private String publisher;
-    private int cost;
+    private double cost;
     private List<Recommendation> listOfRecommendations = new ArrayList<>();
 
 
-    public Book(String isbn, String title, String author, String genre, int year, String publisher, int cost) {
+    public Book(String isbn, String title, String author, String genre, int year, String publisher, double cost) {
         this.isbn = isbn;
         this.title = title;
         this.author = author;
@@ -86,11 +86,11 @@ public class Book {
         this.publisher = publisher;
     }
 
-    public int getCost() {
+    public double getCost() {
         return cost;
     }
 
-    public void setCost(int cost) {
+    public void setCost(double cost) {
         this.cost = cost;
     }
 
