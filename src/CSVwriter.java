@@ -1,13 +1,25 @@
 import java.io.*;
+import java.util.Scanner;
 
 public class CSVwriter
 {
+
+    //TODO: sprawdzic co sie stanie, jesli klasa istnieje, a ktos chce jej wpisac nowy element o blednych deskrypcjach
+    // - teraz nic sie nie dzieje - sprawdzic czy deskrypcje sie zgadzają (co do tresci, nie ilosci)
+    // - może jeśli deskrypcje się zgadzają, ale są w innej kolejności, to je przesortować?
+
+    //TODO: dodać metodę mogącą zupdtować/zmienić deskryptory klasy
+    // - jest podstawa, dodać rozszerzoną funkcjonalność
+
+    //TODO: dodać metodę usuwającą wpisy?
+    // - jeśli zostanie dodana, trzeba wprowadzić funkcjonalność updatowania separatorów poprzez ich odejmowanie
 
     private String separatorDefault = ";";
     private String fileName;
     private int separatorCount;
 
-    CSVwriter(String fileName) throws IOException {
+    CSVwriter(String fileName) throws IOException
+    {
         this.fileName = fileName;
 
         File tmpDir = new File(fileName);
@@ -21,20 +33,31 @@ public class CSVwriter
         this.separatorCount = getMaxSeparators();
     }
 
-    public String getFileName() {
+    public String getFileName()
+    {
         return fileName;
     }
 
-    private void updateSeparatorCount() throws IOException {
+    private void updateSeparatorCount() throws IOException
+    {
         this.separatorCount = getMaxSeparators();
     }
 
-    private void updateSeparatorCount(int quantity) throws IOException {
+    private void updateSeparatorCount(int quantity) throws IOException
+    {
         this.separatorCount = quantity;
     }
 
-    public void addElementToFile(String className, String[] fieldDescriptions, String[] fieldValues) throws IOException {
+    private void insertString(String appendix) throws IOException
+    {
         BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
+        writer.append(appendix);
+        writer.close();
+    }
+
+    public void addElementToDatabase(String className, String[] fieldDescriptions, String[] fieldValues) throws IOException
+    {
+        //BufferedWriter writer;
 
         if (!areArrayContentsSameQuantity(fieldDescriptions, fieldValues)) {
 
@@ -50,29 +73,24 @@ public class CSVwriter
 
         if (doesClassExist(className)) {    //jeśli klasa istnieje
 
-            BufferedReader reader;
+            int divideOn = getLastClassLastEntryLineNumber(className);
 
-            String upToDivisionFileName = "before.csv";
-            String postDivisionFileName = "after.csv";
-            String mergedFileName = "merge.csv";
+            String beforeStr;
+            String afterStr;
+            String[] tempSplitArr;
 
-            int divideOn = getLastClassEntryLineNumber(className);
+            tempSplitArr = splitToStringsOnLine(divideOn);
+            beforeStr = tempSplitArr[0];
+            afterStr = tempSplitArr[1];
 
-            splitCSV(divideOn, upToDivisionFileName, postDivisionFileName);
-
-            addEmptyLine(upToDivisionFileName);
-            enterFromArray(upToDivisionFileName, fieldValues);
-
-            mergeCSV(upToDivisionFileName, postDivisionFileName, mergedFileName);
-
-            writer = new BufferedWriter(new FileWriter(fileName));
-            reader = new BufferedReader(new FileReader(mergedFileName));
-
-            copyContents(reader, writer, "", false);
-
-            deleteFile(upToDivisionFileName);
-            deleteFile(postDivisionFileName);
-            deleteFile(mergedFileName);
+            clearCSV();
+            //writer = new BufferedWriter(new FileWriter(fileName, false));
+            //writer.flush();
+            insertString(beforeStr);
+            addEmptyLine();
+            enterFromArray(fieldValues);
+            addEmptyLine();
+            insertString(afterStr);
 
             System.out.println(String.format("Added new row: (%1$s) to database of class >%2$s< (%3$s)", fieldsToString(fieldValues), className, getClassDescriptionsText(className)));
 
@@ -82,26 +100,108 @@ public class CSVwriter
 
             addNewClassWithDescriptions(className, fieldDescriptions);
             addEmptyLine();
-            addElementToFile(className, fieldValues);
+            addElementToDatabase(className, fieldValues);
 
         }
 
         fillMissingSeparators();
     }
 
-    public void addElementToFile(String className, String[] fieldValues) throws IOException {
+    public void addElementToDatabase(String className, String[] fieldValues) throws IOException
+    {
 
         if (doesClassExist(className)) {
             String[] descriptionsArr = getClassDescriptionsArray(className);
-            addElementToFile(className, descriptionsArr, fieldValues);
-            //System.out.println(String.format("Added new row: (%1$s) to database of class >%2$s<", fieldsToString(fieldValues), className));
+            addElementToDatabase(className, descriptionsArr, fieldValues);
         } else {
             System.out.println("The class: >" + className + "< doesn't exist in database. Element addition cannot be performed without defining Description-fields beforehand.");
         }
 
     }
 
-    private String fieldsToString(String[] fields) {
+    @Override
+    public String toString()
+    {
+        StringBuilder outputString = new StringBuilder();
+        String line;
+
+        try {
+            Scanner myReader = new Scanner(new File(fileName));
+
+            while (myReader.hasNextLine()) {
+                line = myReader.nextLine();
+                outputString.append(line);
+                if (myReader.hasNextLine()) {
+                    outputString.append("\n");
+                }
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            System.out.println("An error occurred while reading the file.");
+        }
+        return outputString.toString();
+    }
+
+    private String getDatabaseContentUpToLine(int divisionLineNumber) throws FileNotFoundException
+    {
+        StringBuilder outputString = new StringBuilder();
+        String currentLine;
+
+        int currentLineNumber = 0;
+
+        Scanner myReader = new Scanner(new File(fileName));
+
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
+            currentLineNumber++;
+
+            if (currentLineNumber <= divisionLineNumber) {
+                outputString.append(currentLine);
+                if (myReader.hasNextLine() && currentLineNumber != divisionLineNumber) {
+                    outputString.append("\n");
+                }
+            } else {
+                break;
+            }
+        }
+
+        return outputString.toString();
+    }
+
+    private String getDatabaseContentAfterLine(int divisionLineNumber) throws FileNotFoundException
+    {
+        StringBuilder outputString = new StringBuilder();
+        String currentLine;
+        int currentLineNumber = 0;
+
+        Scanner myReader = new Scanner(new File(fileName));
+
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
+            currentLineNumber++;
+
+            if (currentLineNumber > divisionLineNumber) {
+                outputString.append(currentLine);
+                if (myReader.hasNextLine()) {
+                    outputString.append("\n");
+                }
+            }
+        }
+
+        return outputString.toString();
+    }
+
+    public String[] splitToStringsOnLine(int divisionLineNumber) throws FileNotFoundException
+    {
+        String[] outputArr = new String[2];
+        outputArr[0] = getDatabaseContentUpToLine(divisionLineNumber);
+        outputArr[1] = getDatabaseContentAfterLine(divisionLineNumber);
+
+        return outputArr;
+    }
+
+    private String fieldsToString(String[] fields)
+    {
         String outputStr = "";
         String[] fieldsPacked = new String[fields.length];
 
@@ -119,12 +219,13 @@ public class CSVwriter
         return outputStr;
     }
 
-    public String getClassDescriptionsText(String className) throws IOException {
+    public String getClassDescriptionsText(String className) throws IOException
+    {
         return fieldsToString(getClassDescriptionsArray(className));
     }
 
 
-    public boolean areFieldDescriptionsCorrect(String className, String[] checkedDescriptions) throws IOException {
+   /* public boolean areFieldDescriptionsCorrect(String className, String[] checkedDescriptions) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
         String line;
 
@@ -181,13 +282,15 @@ public class CSVwriter
             //todo pododawać takie opisy dla różnych wariantów
         }
         return sameDescriptions;
-    }
+    }*/
 
-    private boolean areArrayContentsSameQuantity(String[] arr1, String[] arr2) {
+    private boolean areArrayContentsSameQuantity(String[] arr1, String[] arr2)
+    {
         return arrayWithoutEmptyFields(arr1).length == arrayWithoutEmptyFields(arr2).length;
     }
 
-    private String[] arrayWithoutEmptyFields(String[] arr) {
+    private String[] arrayWithoutEmptyFields(String[] arr)
+    {
         String[] outArrayExtended = new String[arr.length];
         String[] outputArray;
         int nonEmptyFieldCounter = 0;
@@ -206,16 +309,19 @@ public class CSVwriter
         return outputArray;
     }
 
-    public int getMaxSeparators() throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        String line;
+    public int getMaxSeparators() throws IOException
+    {
+        Scanner myReader = new Scanner(new File(fileName));
+
+        String currentLine;
 
         int separatorsInLineQty;
         int maxSeparatorQty = 0;
 
-        while ((line = reader.readLine()) != null) {
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
 
-            separatorsInLineQty = countSeparatorsInLine(line);
+            separatorsInLineQty = countSeparatorsInLine(currentLine);
             if (maxSeparatorQty < separatorsInLineQty) {
                 maxSeparatorQty = separatorsInLineQty;
             }
@@ -224,7 +330,8 @@ public class CSVwriter
         return maxSeparatorQty;
     }
 
-    private void addClassLine(String className) throws IOException {
+    private void addClassLine(String className) throws IOException
+    {
 
         BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
@@ -240,7 +347,8 @@ public class CSVwriter
 
     }
 
-    public void addNewClassWithDescriptions(String className, String[] fieldDescriptions) throws IOException {
+    public void addNewClassWithDescriptions(String className, String[] fieldDescriptions) throws IOException
+    {
 
         if (doesClassExist(className)) {
             System.out.println(String.format("This class >%s< already exists in database.", className));
@@ -258,15 +366,17 @@ public class CSVwriter
 
         fillMissingSeparators();
 
-        System.out.println(String.format("Added new class >%1$s<: (%2$s).",className, getClassDescriptionsText(className)));
+        System.out.println(String.format("Added new class >%1$s<: (%2$s).", className, getClassDescriptionsText(className)));
 
     }
 
-    private void enterFromArray(String[] strArray) throws IOException {
+    private void enterFromArray(String[] strArray) throws IOException
+    {
         enterFromArray(fileName, strArray);
     }
 
-    private void enterFromArray(String destinationFileName, String[] strArray) throws IOException {
+    private void enterFromArray(String destinationFileName, String[] strArray) throws IOException
+    {
         BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFileName, true));
 
         for (int i = 0; i < strArray.length; i++) {
@@ -287,68 +397,66 @@ public class CSVwriter
         writer.close();
     }
 
-    private void addEmptyLine() throws IOException {
+    private void addEmptyLine() throws IOException
+    {
         addEmptyLine(fileName);
     }
 
-    private void addSeparatorLine() throws IOException {
+    private void addEmptyLine(String destinationFileName) throws IOException
+    {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFileName, true));
+        writer.append("\n");
+        writer.close();
+    }
+
+    private void addSeparatorLine() throws IOException
+    {
         BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
         addEmptyLine(fileName);
         writer.append(getSeparatorsString());
         writer.close();
     }
 
-    private void addEmptyLine(String destinationFileName) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(destinationFileName, true));
-        writer.append("\n");
-        writer.close();
-    }
+    private void fillMissingSeparators() throws IOException
+    {
 
-    private void fillMissingSeparators() throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        BufferedWriter writer = new BufferedWriter(new FileWriter("temp.csv"));
-        int separatorCount = getMaxSeparators();
+        //BufferedWriter writer;
+        StringBuilder databaseModification = new StringBuilder();
 
-        String line;
+        String currentLine;
         String missingSeparators;
         int missingSepQty;
-        int lineCounter = 0;
+        int separatorsInLineQty;
+        int separatorCount = getMaxSeparators();
 
-        while ((line = reader.readLine()) != null) {
-            if (lineCounter > 0) {
-                writer.append("\n");
-            }
+        Scanner myReader = new Scanner(new File(fileName));
 
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
             missingSeparators = "";
-            if (countSeparatorsInLine(line) < separatorCount) {
-                missingSepQty = separatorCount - countSeparatorsInLine(line);
+            separatorsInLineQty = countSeparatorsInLine(currentLine);
+            if (separatorsInLineQty < separatorCount) {
+                missingSepQty = separatorCount - separatorsInLineQty;
                 for (int i = 0; i < missingSepQty; i++) {
                     missingSeparators += separatorDefault;
                 }
-                writer.append(line).append(missingSeparators);
+                databaseModification.append(currentLine).append(missingSeparators);
             } else {
-                writer.append(line);
+                databaseModification.append(currentLine);
             }
-            lineCounter++;
+            if (myReader.hasNextLine()) {
+                databaseModification.append("\n");
+            }
         }
 
-        writer.close();
-        reader.close();
-
-        reader = new BufferedReader(new FileReader("temp.csv"));
-        writer = new BufferedWriter(new FileWriter(fileName));
-
-        copyContents(reader, writer, "", false);
-
-        deleteFile("temp.csv");
+        //writer = new BufferedWriter(new FileWriter(fileName, false));
+        //writer.flush();
+        clearCSV();
+        insertString(databaseModification.toString());
     }
 
-    private void deleteFile(String fileName) {
-        File file = new File(fileName);
-        file.delete();
-    }
-
-    private int countSeparatorsInLine(String line) {
+    private int countSeparatorsInLine(String line)
+    {
         String left;
         String right;
         int separatorIndex;
@@ -374,7 +482,8 @@ public class CSVwriter
         return separatorCount;
     }
 
-    private String[] getFieldValsFromLine(String line) {
+    private String[] getFieldValsFromLine(String line)
+    {
         int fieldNumbers = countSeparatorsInLine(line) + 1;
         String[] outputArray = new String[fieldNumbers];
 
@@ -419,13 +528,15 @@ public class CSVwriter
         return outputArray;
     }
 
-    public String[] getClassDescriptionsArray(String className) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        String line;
+    public String[] getClassDescriptionsArray(String className) throws IOException
+    {
+        Scanner myReader = new Scanner(new File(fileName));
+        String currentLine;
 
         if (doesClassExist(className)) {
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(getClassLineString(className))) {
+            while (myReader.hasNextLine()) {
+                currentLine = myReader.nextLine();
+                if (currentLine.equals(getClassLineString(className))) {
                     break;
                 }
             }
@@ -433,17 +544,19 @@ public class CSVwriter
             return null;
         }
 
-        line = reader.readLine();   //nastepna linia po znalezieniu linii klasy, wiec tu są deskrypcje
+        currentLine = myReader.nextLine();   //nastepna linia po znalezieniu linii klasy, wiec tu są deskrypcje
 
-        return getFieldValsFromLine(line);
+        return getFieldValsFromLine(currentLine);
     }
 
-    public boolean doesClassExist(String className) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        String line;
+    public boolean doesClassExist(String className) throws IOException
+    {
+        Scanner myReader = new Scanner(new File(fileName));
+        String currentLine;
 
-        while ((line = reader.readLine()) != null) {
-            if (line.equals(getClassLineString(className))) {
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
+            if (currentLine.equals(getClassLineString(className))) {
                 return true;
             }
         }
@@ -451,7 +564,8 @@ public class CSVwriter
         return false;
     }
 
-    private String getSeparatorsString() {
+    private String getSeparatorsString()
+    {
         String separators = "";
         for (int i = 0; i < this.separatorCount; i++) {
             separators += separatorDefault;
@@ -464,19 +578,23 @@ public class CSVwriter
         return className + ":" + getSeparatorsString();
     }
 
-    private int getLastClassEntryLineNumber(String className) throws IOException {
+    private int getLastClassLastEntryLineNumber(String className) throws IOException
+    {
         int lineNumber = 0;
         String currentLine;
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
-        while ((currentLine = reader.readLine()) != null) {
+        Scanner myReader = new Scanner(new File(fileName));
+
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
             lineNumber++;
             if (currentLine.equals(getClassLineString(className))) {
                 break;
             }
         }
 
-        while ((currentLine = reader.readLine()) != null) {
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
             lineNumber++;
             if (currentLine.equals(getSeparatorsString())) {
                 break;
@@ -486,78 +604,59 @@ public class CSVwriter
         return lineNumber - 1;
     }
 
-    private void splitCSV(int dividingLineNumber, String beforeFileName, String afterFileName) throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        BufferedWriter beforeWriter = new BufferedWriter(new FileWriter(beforeFileName));
-        BufferedWriter afterWriter = new BufferedWriter(new FileWriter(afterFileName));
-
+    private int getLastClassDefinitionLineNumber(String className) throws IOException
+    {
+        int lineNumber = 0;
         String currentLine;
-        int currentLineNumber;
 
-        BufferedWriter writer = beforeWriter;
-        boolean justSwitchedFile = false;
+        Scanner myReader = new Scanner(new File(fileName));
 
-        currentLine = reader.readLine();
-        currentLineNumber = 1;
-
-        while (currentLine != null) {
-            writer.append(currentLine);
-
-            if (currentLineNumber == dividingLineNumber) {
-                writer = afterWriter;
-                justSwitchedFile = true;
+        while (myReader.hasNextLine()) {
+            currentLine = myReader.nextLine();
+            lineNumber++;
+            if (currentLine.equals(getClassLineString(className))) {
+                break;
             }
-
-            currentLine = reader.readLine();
-            currentLineNumber++;
-
-            if (!justSwitchedFile) {
-                if (currentLine != null) {
-                    writer.append("\n");
-                }
-            } else {
-                justSwitchedFile = false;
-            }
-
         }
 
-        afterWriter.close();
-        beforeWriter.close();
+        return lineNumber;
+    }
+
+    public void changeClassDescriptions(String className, String[] newFieldDescriptions) throws IOException
+    {
+        if (!doesClassExist(className)){
+            System.out.println("The class: >" + className + "< doesn't exist in database. Descriptions modification failed.");
+            return;
+        }
+
+        String[] currentFieldDescriptions = getClassDescriptionsArray(className);
+        int descriptionLineNumber = getLastClassDefinitionLineNumber(className) + 1;
+
+        String beforeStr;
+        String afterStr;
+
+        beforeStr = getDatabaseContentUpToLine(descriptionLineNumber - 1);
+        afterStr = getDatabaseContentAfterLine(descriptionLineNumber);
+
+        if (arrayWithoutEmptyFields(currentFieldDescriptions).length == newFieldDescriptions.length) {
+            clearCSV();
+            insertString(beforeStr);
+            addEmptyLine();
+            enterFromArray(newFieldDescriptions);
+            addEmptyLine();
+            insertString(afterStr);
+        } else {
+
+        }
 
     }
 
-    public void copyContents(BufferedReader fromFile, BufferedWriter toFile, String additionText, boolean append) throws IOException {
+    private void clearCSV() throws IOException
+    {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, false));
+        writer.flush();
+        writer.close();
 
-        String currentLine = fromFile.readLine();
-        if (append) {
-            toFile.append("\n");
-        }
-
-        while (currentLine != null) {
-            toFile.append(currentLine).append(additionText);
-
-            currentLine = fromFile.readLine();
-            if (currentLine != null) {
-                toFile.append("\n");
-            }
-        }
-
-        toFile.close();
-        fromFile.close();
-
-    }
-
-    public void mergeCSV(String firstFileName, String secondFileName, String mergedFileName) throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(mergedFileName));
-
-        BufferedReader reader = new BufferedReader(new FileReader(firstFileName));
-
-        copyContents(reader, writer, "", false);
-
-        reader = new BufferedReader(new FileReader(secondFileName));
-        writer = new BufferedWriter(new FileWriter(mergedFileName, true));
-
-        copyContents(reader, writer, "", true);
     }
 
 }
