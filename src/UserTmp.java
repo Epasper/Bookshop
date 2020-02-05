@@ -6,6 +6,10 @@ public class UserTmp
     String email;
     String password;
 
+    public UserTmp()
+    {
+    }
+
     public UserTmp(String id, String name, String surname, String email, String password)
     {
         this.id = id;

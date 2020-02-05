@@ -1,9 +1,6 @@
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class UserModel
 {
@@ -182,5 +179,65 @@ public class UserModel
         csv.addElementToDatabase("User", getUserData(newUser));
 
     }
+
+    void deleteUser(UserTmp userToDelete) throws IOException
+    {
+        //delete from list
+        for (Iterator<UserTmp> iter = this.usersList.listIterator(); iter.hasNext(); )
+        {
+            UserTmp currentUser = iter.next();
+            if (currentUser.equals(userToDelete))
+            {
+                iter.remove();
+            }
+        }
+
+        //delete from database
+        CSVwriter csv = new CSVwriter(this.databaseName);
+
+        csv.deleteElement("User", this.getUserData(userToDelete));
+
+    }
+
+    void editUser(UserTmp userToEdit, String[] newUserData) throws IOException
+    {
+        //delete from list
+        UserTmp currentUser = new UserTmp();
+
+        for (Iterator<UserTmp> iter = this.usersList.listIterator(); iter.hasNext(); )
+        {
+            UserTmp iterUser = iter.next();
+            if (iterUser.equals(userToEdit))
+            {
+                currentUser = iterUser;
+                break;
+            }
+
+        }
+
+        String[] currentUserData = getUserData(currentUser);
+
+        for (int i = 0; i < currentUserData.length; i++)
+        {
+            if (newUserData[i].equals(""))
+            {
+                newUserData[i] = currentUserData[i];
+            }
+        }
+
+
+        //edit in database
+        CSVwriter csv = new CSVwriter(this.databaseName);
+        csv.editElement("User", this.getUserData(userToEdit), newUserData);
+
+        //TODO: jak to zoptymalizować, żeby nie trzeba było tak listować pól klasy User?
+        currentUser.setId(newUserData[0]);
+        currentUser.setName(newUserData[1]);
+        currentUser.setSurname(newUserData[2]);
+        currentUser.setEmail(newUserData[3]);
+        currentUser.setPassword(newUserData[4]);
+
+    }
+
 
 }

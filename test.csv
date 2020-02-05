@@ -1,0 +1,14 @@
+Book:;;
+Tyt;Autor;Rok
+1LOTR;1Tolkien;1990
+2LOTR;2Tolkien;1990
+1LOTR;1Tolkien;1990
+2LOTR;2Tolkien;1990
+1LOTR;1Tolkien;1990
+;;
+xBook:;;
+xTyt;xAutor;xRok
+xxxLOTR;xxxTolkien;xxx1990
+xxxLOTR;xxxTolkien;xxx1990
+xxxLOTR;xxxTolkien;xxx1990
+;;

@@ -24,5 +24,14 @@ public class Test
 
         users.addUser("Tomasz", "Nazwisko", "placeholder@gmail.com", "xxx");
 
+        //TODO: metody edycji i usuwania (w klasie CSVwriter) nie działają poprawnie -
+        // dla elementu pierwszego i ostatniego tworzą niepotrzebną pustą linijkę
+
+//        users.editUser(users.getUserById("68098"),new String[]
+//                {"","ImieZmieniono","NazwiskoZmieniono","mailZmieniono",""});
+
+        users.deleteUser(users.getUserById("99999"));
+
+
     }
 }

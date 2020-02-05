@@ -49,6 +49,7 @@
 
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class CSVwriter
@@ -183,6 +184,33 @@ public class CSVwriter
     }
 
     /**
+     * Metoda podstawowa do wpisywania/dodawania tekstu do podanego pliku.
+     * Dodaje po prostu tekst na koniec pliku, bez tworzenia nowej linii.
+     *
+     * @param appendix - tekst który chcemy dodać na koniec pliku
+     */
+    private void insertString(String appendix, String filename) throws IOException
+    {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true));
+        writer.append(appendix);
+        writer.close();
+    }
+
+    /**
+     * Metoda podstawowa do wpisywania/dodawania tekstu do domyślnej bazy danych.
+     * Dodaje po prostu tekst na koniec pliku, bez tworzenia nowej linii.
+     *
+     * @param appendix - tekst który chcemy dodać na koniec pliku
+     */
+    private void insertString(String appendix) throws IOException
+    {
+//        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
+//        writer.append(appendix);
+//        writer.close();
+        insertString(appendix, fileName);
+    }
+
+    /**
      * Metoda skanuje wszystkie wiersze bazy danych, a następnie jeśli w którymś z nich
      * jest mniej separatorów, niż w dowolnym innym wierszu, to "wybrakowany" wers zostanie
      * uzupełniony o brakujące separatory tak, aby ich liczba w każdej linijce była równa
@@ -230,19 +258,6 @@ public class CSVwriter
 
         clearCSV();
         insertString(databaseModification.toString());
-    }
-
-    /**
-     * Metoda podstawowa do wpisywania/dodawania tekstu do pliku.
-     * Dodaje po prostu tekst na koniec pliku, bez tworzenia nowej linii.
-     *
-     * @param appendix - tekst który chcemy dodać na koniec pliku
-     */
-    private void insertString(String appendix) throws IOException
-    {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
-        writer.append(appendix);
-        writer.close();
     }
 
     /**
@@ -358,20 +373,22 @@ public class CSVwriter
     }
 
     /**
-     * Metoda zwracająca treść bazy danych, ale tylko do pewnego wiersza włącznie.
+     * Metoda zwracająca treść Stringa, ktory posiada wiele linii,
+     * ale tylko do pewnego wiersza włącznie.
      *
-     * @param divisionLineNumber - numer wiersza bazy danych,
+     * @param data               - String z podziałemna wiele linii
+     * @param divisionLineNumber - numer wiersza Stringa wejściowego,
      *                           DO KTÓREGO WŁĄCZNIE będzie czytany ów plik
-     * @return - zwraca String, będący treścią bazy danych aż po podaną linię włącznie.
+     * @return - zwraca String, będący treścią Stringa wejściowego aż po podaną linię włącznie.
      */
-    private String getDatabaseContentUpToLine(int divisionLineNumber) throws FileNotFoundException
+    private String getContentUpToLine(String data, int divisionLineNumber) throws FileNotFoundException
     {
         StringBuilder outputString = new StringBuilder();
         String currentLine;
 
         int currentLineNumber = 0;
 
-        Scanner myReader = new Scanner(new File(fileName));
+        Scanner myReader = new Scanner(data);
 
         while (myReader.hasNextLine())
         {
@@ -396,20 +413,34 @@ public class CSVwriter
     }
 
     /**
-     * Metoda zwracająca treść bazy danych, ale tylko po pewnym wierszu.
+     * (przeciążenie)
+     * Metoda zwracająca treść bazy danych, ale tylko do pewnego wiersza włącznie.
      *
-     * @param divisionLineNumber - numer wiersza pliku .csv,
-     *                           PO KTÓRYM będzie czytany ów plik
-     * @return - zwraca String, będący treścią domyślnego pliku .csv po podanej linii,
+     * @param divisionLineNumber - numer wiersza bazy danych,
+     *                           DO KTÓREGO WŁĄCZNIE będzie czytany ów plik
+     * @return - zwraca String, będący treścią bazy danych aż po podaną linię włącznie.
+     */
+    private String getContentUpToLine(int divisionLineNumber) throws FileNotFoundException
+    {
+        return getContentUpToLine(this.toString(), divisionLineNumber);
+    }
+
+    /**
+     * Metoda zwracająca treść Stringa, ktory posiada wiele linii,
+     * ale tylko po pewnym wierszu.
+     *
+     * @param divisionLineNumber - numer wiersza Stringa wejściowego,
+     *                           PO KTÓRYM będzie czytany ów String
+     * @return - zwraca String, będący treścią Stringa wejściowego po podanej linii,
      * z wyłączeniem treści tejże linii
      */
-    private String getDatabaseContentAfterLine(int divisionLineNumber) throws FileNotFoundException
+    private String getContentAfterLine(String data, int divisionLineNumber) throws FileNotFoundException
     {
         StringBuilder outputString = new StringBuilder();
         String currentLine;
         int currentLineNumber = 0;
 
-        Scanner myReader = new Scanner(new File(fileName));
+        Scanner myReader = new Scanner(data);
 
         while (myReader.hasNextLine())
         {
@@ -430,6 +461,20 @@ public class CSVwriter
     }
 
     /**
+     * (przeciążenie)
+     * Metoda zwracająca treść bazy danych, ale tylko po pewnym wierszu.
+     *
+     * @param divisionLineNumber - numer wiersza pliku .csv,
+     *                           PO KTÓRYM będzie czytany ów plik
+     * @return - zwraca String, będący treścią domyślnego pliku .csv po podanej linii,
+     * z wyłączeniem treści tejże linii
+     */
+    private String getContentAfterLine(int divisionLineNumber) throws FileNotFoundException
+    {
+        return getContentAfterLine(this.toString(), divisionLineNumber);
+    }
+
+    /**
      * Metoda zwracająca treść bazy danych, zawartą pomiędzy podanymi numerami wierszy
      * (wiersz początkowy włącznie)
      *
@@ -437,7 +482,7 @@ public class CSVwriter
      * @param endLineNumber
      * @return
      */
-    private String getDatabaseContentBetweenLines(int startLineNumber, int endLineNumber) throws FileNotFoundException
+    private String getContentBetweenLines(int startLineNumber, int endLineNumber) throws FileNotFoundException
     {
         StringBuilder outputString = new StringBuilder();
         String currentLine;
@@ -469,6 +514,24 @@ public class CSVwriter
     }
 
     /**
+     * Metoda dzieląca treść Stringa na dwa człony do- (włącznie), i od konkretnego wiersza
+     *
+     * @param data               - String posiadający wiele linii tekstu
+     * @param divisionLineNumber - numer wiersza, po którym dochodzi do podziału Stringa
+     * @return - zwraca dwuelementową tablicę (String[2]).
+     * Pierwszy element tej tablicy (outputArr[0]) jest treścią Stringa wejściowego od początku,
+     * aż do podanego wiersza włącznie. Drugi element (outputArr[1]) zawiera treść pliku po podanym wierszu
+     */
+    public String[] splitToStringsOnLine(String data, int divisionLineNumber) throws FileNotFoundException
+    {
+        String[] outputArr = new String[2];
+        outputArr[0] = getContentUpToLine(data, divisionLineNumber);
+        outputArr[1] = getContentAfterLine(data, divisionLineNumber);
+
+        return outputArr;
+    }
+
+    /**
      * Metoda dzieląca treść bazy danych na dwa człony do- (włącznie), i od konkretnego wiersza
      *
      * @param divisionLineNumber - numer wiersza, po którym dochodzi do podziału pliku
@@ -478,11 +541,7 @@ public class CSVwriter
      */
     public String[] splitToStringsOnLine(int divisionLineNumber) throws FileNotFoundException
     {
-        String[] outputArr = new String[2];
-        outputArr[0] = getDatabaseContentUpToLine(divisionLineNumber);
-        outputArr[1] = getDatabaseContentAfterLine(divisionLineNumber);
-
-        return outputArr;
+        return splitToStringsOnLine(this.toString(), divisionLineNumber);
     }
 
     /**
@@ -500,7 +559,7 @@ public class CSVwriter
         classContentBeginsLineNumber = getClassDefinitionLineNumber(className) + 2;
         classDivisionLineNumber = getClassLastEntryLineNumber(className) + 1;
 
-        return getDatabaseContentBetweenLines(classContentBeginsLineNumber, classDivisionLineNumber);
+        return getContentBetweenLines(classContentBeginsLineNumber, classDivisionLineNumber);
     }
 
     /**
@@ -508,7 +567,7 @@ public class CSVwriter
      * Metoda do uzyskania elementów danej klasy w postaći dwuwymiarowej tablicy Stringów.
      *
      * @param className - nazwa klasy, której elementy chcemy pozyska
-     * @param asString - czy chcemy, żeby fukcja zwracała String? Jesli nie, zwróci tablicę.
+     * @param asString  - czy chcemy, żeby fukcja zwracała String? Jesli nie, zwróci tablicę.
      * @return - Dwuwymiarowa tablica, odwzorowująca strukturę kolumn i wierszy
      * arkusza kalkulacyjnego. Wiersze to kolejne elementy danej klasy,
      * a kolumny zawierają poszczególe informacje nt. tych elementów
@@ -531,7 +590,7 @@ public class CSVwriter
         classContentBeginsLineNumber = getClassDefinitionLineNumber(className) + 2;
         classDivisionLineNumber = getClassLastEntryLineNumber(className) + 1;
 
-        classContent = getDatabaseContentBetweenLines(classContentBeginsLineNumber, classDivisionLineNumber);
+        classContent = getContentBetweenLines(classContentBeginsLineNumber, classDivisionLineNumber);
 
         Scanner myReader = new Scanner(classContent);
         while (myReader.hasNextLine())
@@ -749,6 +808,74 @@ public class CSVwriter
     }
 
     /**
+     * Metoda która konwertuje zadany String na format czytelny dla rozszerzenia .csv,
+     * tzn. uwzględniający specjalne użycie separatorów (średników) i cudzysłowów.
+     *
+     * @param stringToConvert - String który chcemy przekonwertować
+     * @return - przekonwertowany string
+     */
+    private String convertToCsvString(String stringToConvert)
+    {
+        if (stringToConvert.contains(separatorDefault) || stringToConvert.contains("\""))
+        {
+            return ("\"" + stringToConvert.replace("\"", "\"\"") + "\"");
+        }
+        else
+        {
+            return stringToConvert;
+        }
+    }
+
+    /**
+     * (przeciążenie)
+     * j.w. tyle że konwertuje Tablicę Stringów, a poszczególne Stringi oddziela separatorami
+     * (średnikiem)
+     * @param stringsToConvert - tablica Stringów do przekonwertowania
+     * @return - String wyglądający jak linia pliku .csv
+     */
+    private String convertToCsvString(String[] stringsToConvert)
+    {
+        StringBuilder outputString = new StringBuilder();
+
+        for (String strToConvert : stringsToConvert)
+        {
+            if (strToConvert.contains(separatorDefault) || strToConvert.contains("\""))
+            {
+                outputString
+                        .append("\"")
+                        .append(strToConvert.replace("\"", "\"\""))
+                        .append("\"")
+                        .append(separatorDefault);
+            }
+            else
+            {
+                outputString
+                        .append(strToConvert)
+                        .append(separatorDefault);
+            }
+        }
+
+        if (outputString.length() > 0)
+        {
+            outputString.deleteCharAt(outputString.length() - 1);
+        }
+
+        return outputString.toString();
+    }
+
+    //TODO: metoda poniżej
+    private String convertFromCsvString(String csvString)
+    {
+        return null;
+    }
+
+    private String arrayToCsvLine(String[] strArray)
+    {
+
+        return null;
+    }
+
+    /**
      * Metoda która pobiera tablicę Stringów, a potem kolejne jej elementy umieszcza do pliku .csv
      * w formacie czytelnym dla tego rozszerzenia, tzn. uwzględniającym wymagane cudzysłowy i separatory.
      * Metoda nie tworzy nowej linii i domyślnie dodaje nową treść na końcu pliku.
@@ -765,24 +892,11 @@ public class CSVwriter
 
         for (int i = 0; i < strArray.length; i++)
         {
-
-            if (strArray[i].contains(separatorDefault))
-            {     //jeżeli pole = ;
-                writer.append("\"").append(strArray[i]).append("\"");
-            }
-            else if (strArray[i].contains("\""))
-            {  //jeżeli pole zawiera znak cudzysłowu "
-                writer.append("\"").append(strArray[i].replace("\"", "\"\"")).append("\""); //znak cudzysłowu sie duplikuje: " -> ""
-            }
-            else
-            {
-                writer.append(strArray[i]);
-            }
+            writer.append(convertToCsvString(strArray[i]));
 
             if (i < strArray.length - 1)
             {
                 writer.append(separatorDefault);
-                //System.out.println(separatorDefault);
             }
         }
         writer.close();
@@ -1231,8 +1345,8 @@ public class CSVwriter
         String beforeStr;
         String afterStr;
 
-        beforeStr = getDatabaseContentUpToLine(descriptionLineNumber - 1);
-        afterStr = getDatabaseContentAfterLine(descriptionLineNumber);
+        beforeStr = getContentUpToLine(descriptionLineNumber - 1);
+        afterStr = getContentAfterLine(descriptionLineNumber);
 
         if (arrayWithoutEmptyFields(currentFieldDescriptions).length == newFieldDescriptions.length)
         {
@@ -1258,6 +1372,99 @@ public class CSVwriter
         BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, false));
         writer.flush();
         writer.close();
+
+    }
+
+    /**
+     * UWAGA: metoda działa poprawnie przy założeniu, że istnieje tylko jeden taki element,
+     * który chcemy usunąć - nie ma jego duplikatów w bazie. Podział nastąpi zawsze
+     * na pierwszym znalezionym elemencie
+     *
+     * @param className   - nazwa klasy elementu
+     * @param fieldValues - dane opisujące element, który chcemy usunąć
+     */
+    public void deleteElement(String className, String[] fieldValues) throws IOException
+    {
+        String databaseBefore;
+        String elementRowsData = getElementsOfClass(className);
+        String databaseAfter;
+
+        String currentLine;
+        String[] currentElementFields;
+        int elementNumber = 0;
+
+        databaseBefore = getContentUpToLine(getClassDefinitionLineNumber(className) + 1);
+        databaseAfter = getContentAfterLine(getClassLastEntryLineNumber(className));
+
+        Scanner myReader = new Scanner(elementRowsData);
+
+        while (myReader.hasNextLine())
+        {
+            currentLine = myReader.nextLine();
+            elementNumber++;
+            currentElementFields = arrayWithoutEmptyFields(getFieldArrayFromLine(currentLine));
+
+            if (Arrays.equals(currentElementFields, fieldValues))
+            {
+                break;
+            }
+
+        }
+
+        String elementsBeforeDeletedOne = getContentUpToLine(elementRowsData, elementNumber - 1);
+        String elementsAfterDeletedOne = getContentAfterLine(elementRowsData, elementNumber);
+
+        StringBuilder outputString = new StringBuilder();
+        outputString.append(databaseBefore).append("\n")
+                .append(elementsBeforeDeletedOne).append("\n")
+                .append(elementsAfterDeletedOne).append("\n")
+                .append(databaseAfter);
+
+        clearCSV();
+        insertString(outputString.toString());
+
+    }
+
+    public void editElement(String className, String[] searchedFieldValues, String[] newFieldValues) throws IOException
+    {
+        String databaseBefore;
+        String elementRowsData = getElementsOfClass(className);
+        String databaseAfter;
+
+        String currentLine;
+        String[] currentElementFields;
+        int elementNumber = 0;
+
+        databaseBefore = getContentUpToLine(getClassDefinitionLineNumber(className) + 1);
+        databaseAfter = getContentAfterLine(getClassLastEntryLineNumber(className));
+
+        Scanner myReader = new Scanner(elementRowsData);
+
+        while (myReader.hasNextLine())
+        {
+            currentLine = myReader.nextLine();
+            elementNumber++;
+            currentElementFields = arrayWithoutEmptyFields(getFieldArrayFromLine(currentLine));
+
+            if (Arrays.equals(currentElementFields, searchedFieldValues))
+            {
+                break;
+            }
+
+        }
+
+        String elementsBeforeEditedOne = getContentUpToLine(elementRowsData, elementNumber - 1);
+        String elementsAfterEditedOne = getContentAfterLine(elementRowsData, elementNumber);
+
+        StringBuilder outputString = new StringBuilder();
+        outputString.append(databaseBefore).append("\n")
+                .append(elementsBeforeEditedOne).append("\n")
+                .append(convertToCsvString(newFieldValues)).append("\n")
+                .append(elementsAfterEditedOne).append("\n")
+                .append(databaseAfter);
+
+        clearCSV();
+        insertString(outputString.toString());
 
     }
 
