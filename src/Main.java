@@ -5,11 +5,10 @@ import java.io.IOException;
 public class Main {
     public static void main(String[] args) throws IOException {
 
-        CSVwriter csv = new CSVwriter("database.csv");
+        CSVwriter csv = new CSVwriter("test.csv");
 
-        csv.addElementToDatabase("User",
-                new String[]{"Username", "e-mail", "Password", "Avatar"},
-                new String[]{"hwnd", "hwnd@gmail.com", "haslo123","pic.jpg"});
+        csv.addElementToDatabase("Book",
+                new String[]{"111", "222", "333"});
 
     }
 }
